@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Portal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;min-height:100vh;padding:1.5rem 1rem;color:#1a1a1a}
+.portal{max-width:900px;margin:0 auto}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;flex-wrap:wrap}
+.topbar h1{font-size:20px;font-weight:600;flex:1;color:#1a1a1a}
+.tab-row{display:flex;gap:6px}
+.tab{padding:7px 18px;border-radius:8px;border:1px solid #ccc;background:#fff;font-size:13px;font-weight:500;cursor:pointer;color:#555;transition:all .15s}
+.tab.active-company{background:#1B4332;color:#fff;border-color:#1B4332}
+.tab.active-crm{background:#1D3557;color:#fff;border-color:#1D3557}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:#fff;border-radius:8px;padding:.75rem 1rem;border:1px solid #e5e7eb}
+.stat-label{font-size:11px;color:#888;margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600;color:#1a1a1a}
+.prog-wrap{margin-bottom:1.25rem}
+.prog-bar{height:7px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width .4s ease}
+.prog-label{font-size:12px;color:#888;margin-top:5px}
+.filters{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.filters select,.search-box{padding:7px 10px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#1a1a1a;font-size:13px;outline:none}
+.search-box{flex:1;min-width:140px}
+.add-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.add-input{flex:1;min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#1a1a1a;font-size:13px;outline:none}
+.add-select{padding:8px 10px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#1a1a1a;font-size:13px;outline:none}
+.add-btn{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;color:#fff;transition:opacity .15s}
+.add-btn:hover{opacity:.85}
+.task-list{display:flex;flex-direction:column;gap:8px}
+.task-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:.85rem 1rem;display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;transition:border-color .15s}
+.task-card:hover{border-color:#bbb}
+.task-card.done-card{opacity:.5}
+.check-btn{width:22px;height:22px;border-radius:50%;border:1.5px solid #ccc;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .15s;font-size:13px;color:transparent}
+.check-btn.checked{color:#fff;border:none}
+.task-body{min-width:0}
+.task-title{font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:5px;outline:none;border:1px solid transparent;border-radius:5px;background:transparent;width:100%;padding:2px 4px;transition:border .15s}
+.task-title:focus{border-color:#ddd;background:#f9f9f9}
+.task-title.done-text{text-decoration:line-through;color:#aaa}
+.task-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:5px}
+.meta-select{font-size:11px;padding:3px 7px;border-radius:99px;border:1px solid transparent;cursor:pointer;outline:none;font-weight:500}
+.next-input{font-size:11px;color:#555;border:none;background:transparent;outline:none;min-width:120px;padding:2px 0;border-bottom:1px dashed #ddd}
+.next-input::placeholder{color:#bbb}
+
+/* History log */
+.history-log{margin-top:6px;border-top:1px dashed #f0f0f0;padding-top:6px}
+.history-toggle{font-size:11px;color:#999;cursor:pointer;display:flex;align-items:center;gap:4px;background:none;border:none;padding:0;user-select:none}
+.history-toggle:hover{color:#555}
+.history-entries{margin-top:5px;display:flex;flex-direction:column;gap:3px}
+.history-entry{display:flex;align-items:center;gap:6px;font-size:10.5px;color:#888}
+.h-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.h-status{font-weight:600;padding:1px 6px;border-radius:99px;font-size:10px}
+.h-time{color:#bbb;margin-left:auto;white-space:nowrap}
+
+.task-actions{display:flex;gap:4px;align-items:center;padding-top:2px}
+.icon-btn{background:none;border:none;cursor:pointer;color:#ccc;padding:4px;border-radius:6px;font-size:15px;transition:all .15s}
+.icon-btn:hover{background:#f3f4f6;color:#e57373}
+.empty{text-align:center;padding:2.5rem 1rem;color:#aaa;font-size:14px}
+
+/* Tooltip on timestamp hover */
+.h-time[title]{cursor:help}
+</style>
+</head>
+<body>
+<div class="portal">
+  <div class="topbar">
+    <h1>&#9989; Task Portal</h1>
+    <div class="tab-row">
+      <button class="tab active-company" id="tab-company" onclick="switchTab('company')">&#127970; Company</button>
+      <button class="tab" id="tab-crm" onclick="switchTab('crm')">&#128101; CRM</button>
+    </div>
+  </div>
+  <div class="stats" id="stats-row"></div>
+  <div class="prog-wrap">
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+    <div class="prog-label" id="prog-label"></div>
+  </div>
+  <div class="filters">
+    <input class="search-box" id="search" placeholder="Search tasks…" oninput="render()" />
+    <select id="filter-status" onchange="render()">
+      <option value="">All status</option>
+      <option>To Do</option><option>In Progress</option><option>Done</option><option>Blocked</option>
+    </select>
+    <select id="filter-priority" onchange="render()">
+      <option value="">All priority</option>
+      <option>High</option><option>Medium</option><option>Low</option>
+    </select>
+  </div>
+  <div class="add-row">
+    <input class="add-input" id="new-task" placeholder="Add a new task…" onkeydown="if(event.key==='Enter')addTask()" />
+    <select class="add-select" id="new-priority">
+      <option>Medium</option><option>High</option><option>Low</option>
+    </select>
+    <button class="add-btn" id="add-btn" onclick="addTask()">+ Add</button>
+  </div>
+  <div class="task-list" id="task-list"></div>
+</div>
+
+<script>
+const COMPANY_COLOR='#1B4332', CRM_COLOR='#1D3557';
+const STATUS_COLORS={
+  'To Do':      {bg:'#E6F1FB',text:'#0C447C',dot:'#5B9BD5'},
+  'In Progress':{bg:'#FAEEDA',text:'#633806',dot:'#E6A817'},
+  'Done':       {bg:'#EAF3DE',text:'#27500A',dot:'#5BAD6F'},
+  'Blocked':    {bg:'#FCEBEB',text:'#791F1F',dot:'#E05C5C'},
+};
+const PRIORITY_COLORS={
+  'High':  {bg:'#FCEBEB',text:'#791F1F'},
+  'Medium':{bg:'#FAEEDA',text:'#633806'},
+  'Low':   {bg:'#EAF3DE',text:'#27500A'},
+};
+
+let activeTab='company', nextId=100;
+
+function nowStamp() {
+  const d = new Date();
+  const date = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const time = d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  return {date, time, iso: d.toISOString()};
+}
+
+function makeHistory(status) {
+  const s = nowStamp();
+  return {status, date: s.date, time: s.time, iso: s.iso};
+}
+
+const data={
+  company:[
+    {id:1,title:'Registration',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
+    {id:2,title:'Trademark',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
+    {id:3,title:'Social Media Pages with our Services',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+    {id:4,title:'Lead List',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+    {id:5,title:'Meeting with Virol & Anand',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+  ],
+  crm:[
+    {id:6, title:'Registration / Trademark',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
+    {id:7, title:'Logo with tagline',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+    {id:8, title:'CRM Tool \u2013 Ready',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
+    {id:9, title:'Testing',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+    {id:10,title:'Business and competitor Research',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+    {id:11,title:'New features to be added',status:'To Do',priority:'Low',next:'',history:[makeHistory('To Do')]},
+    {id:12,title:'Hosting & Domain',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
+    {id:13,title:'Functionality Check',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+    {id:14,title:'Cold call Pitch \u2192 Ready',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
+  ]
+};
+
+// Track which cards have history expanded
+const expanded = new Set();
+
+function switchTab(tab){
+  activeTab=tab;
+  document.getElementById('tab-company').className='tab'+(tab==='company'?' active-company':'');
+  document.getElementById('tab-crm').className='tab'+(tab==='crm'?' active-crm':'');
+  document.getElementById('add-btn').style.background=tab==='company'?COMPANY_COLOR:CRM_COLOR;
+  document.getElementById('search').value='';
+  document.getElementById('filter-status').value='';
+  document.getElementById('filter-priority').value='';
+  render();
+}
+
+function getFiltered(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const fs=document.getElementById('filter-status').value;
+  const fp=document.getElementById('filter-priority').value;
+  return data[activeTab].filter(t=>
+    (!q||t.title.toLowerCase().includes(q)||t.next.toLowerCase().includes(q))&&
+    (!fs||t.status===fs)&&(!fp||t.priority===fp)
+  );
+}
+
+function render(){
+  const items=data[activeTab];
+  const filtered=getFiltered();
+  const done=items.filter(t=>t.status==='Done').length;
+  const inprog=items.filter(t=>t.status==='In Progress').length;
+  const todo=items.filter(t=>t.status==='To Do').length;
+  const pct=items.length?Math.round(done/items.length*100):0;
+  const color=activeTab==='company'?COMPANY_COLOR:CRM_COLOR;
+
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-val">${items.length}</div></div>
+    <div class="stat"><div class="stat-label">To Do</div><div class="stat-val">${todo}</div></div>
+    <div class="stat"><div class="stat-label">In Progress</div><div class="stat-val">${inprog}</div></div>
+    <div class="stat"><div class="stat-label">Done</div><div class="stat-val">${done}</div></div>`;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-fill').style.background=color;
+  document.getElementById('prog-label').textContent=`${done} of ${items.length} completed — ${pct}%`;
+
+  const list=document.getElementById('task-list');
+  if(!filtered.length){list.innerHTML='<div class="empty">No tasks found</div>';return;}
+
+  list.innerHTML=filtered.map(t=>{
+    const sc=STATUS_COLORS[t.status]||STATUS_COLORS['To Do'];
+    const pc=PRIORITY_COLORS[t.priority]||PRIORITY_COLORS['Medium'];
+    const isDone=t.status==='Done';
+    const isExp=expanded.has(t.id);
+    const lastEntry=t.history[t.history.length-1];
+
+    // Build history entries HTML
+    const histHTML = t.history.slice().reverse().map((h,i)=>{
+      const hc=STATUS_COLORS[h.status]||STATUS_COLORS['To Do'];
+      const isLatest=i===0;
+      return `<div class="history-entry">
+        <div class="h-dot" style="background:${hc.dot}"></div>
+        <span class="h-status" style="background:${hc.bg};color:${hc.text}">${h.status}</span>
+        <span>${isLatest?'<b>Latest</b> &mdash; ':''}</span>
+        <span class="h-time" title="${h.date} ${h.time}">${h.date} &bull; ${h.time}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="task-card ${isDone?'done-card':''}" id="card-${t.id}">
+      <button class="check-btn ${isDone?'checked':''}" style="${isDone?'background:'+color:''}"
+        onclick="toggleDone(${t.id})">${isDone?'&#10003;':''}</button>
+      <div class="task-body">
+        <input class="task-title ${isDone?'done-text':''}" value="${t.title.replace(/"/g,'&quot;')}"
+          onchange="update(${t.id},'title',this.value)" />
+        <div class="task-meta">
+          <select class="meta-select" style="color:${sc.text};background:${sc.bg}"
+            onchange="updateStatus(${t.id},this.value)">
+            ${['To Do','In Progress','Done','Blocked'].map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <select class="meta-select" style="color:${pc.text};background:${pc.bg}"
+            onchange="update(${t.id},'priority',this.value)">
+            ${['High','Medium','Low'].map(p=>`<option ${t.priority===p?'selected':''}>${p}</option>`).join('')}
+          </select>
+          &#8594;
+          <input class="next-input" value="${t.next.replace(/"/g,'&quot;')}"
+            placeholder="Next action…" onchange="update(${t.id},'next',this.value)" />
+        </div>
+        <div class="history-log">
+          <button class="history-toggle" onclick="toggleHistory(${t.id})">
+            &#128337; ${isExp?'&#9650; Hide':'&#9660; Show'} status history
+            (${t.history.length} update${t.history.length!==1?'s':''})
+            &nbsp;&mdash;&nbsp; Last: <b>${lastEntry.status}</b> on ${lastEntry.date} at ${lastEntry.time}
+          </button>
+          ${isExp?`<div class="history-entries">${histHTML}</div>`:''}
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="icon-btn" onclick="deleteTask(${t.id})" title="Delete">&#128465;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleHistory(id){
+  if(expanded.has(id)) expanded.delete(id); else expanded.add(id);
+  render();
+}
+
+function updateStatus(id, val){
+  const item=data[activeTab].find(t=>t.id===id);
+  if(item && item.status!==val){
+    item.status=val;
+    item.history.push(makeHistory(val));
+    render();
+  }
+}
+
+function update(id,field,val){
+  const item=data[activeTab].find(t=>t.id===id);
+  if(item){item[field]=val;render();}
+}
+
+function toggleDone(id){
+  const item=data[activeTab].find(t=>t.id===id);
+  if(item){
+    const newStatus=item.status==='Done'?'To Do':'Done';
+    item.status=newStatus;
+    item.history.push(makeHistory(newStatus));
+    render();
+  }
+}
+
+function deleteTask(id){
+  data[activeTab]=data[activeTab].filter(t=>t.id!==id);
+  expanded.delete(id);
+  render();
+}
+
+function addTask(){
+  const inp=document.getElementById('new-task');
+  const pri=document.getElementById('new-priority').value;
+  const val=inp.value.trim();
+  if(!val)return;
+  data[activeTab].push({id:nextId++,title:val,status:'To Do',priority:pri,next:'',history:[makeHistory('To Do')]});
+  inp.value='';
+  render();
+}
+
+document.getElementById('add-btn').style.background=COMPANY_COLOR;
+render();
+</script>
+</body>
+</html>
