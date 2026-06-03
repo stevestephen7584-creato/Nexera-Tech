@@ -42,8 +42,16 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;min-height:100vh;padding:1.
 .task-title.done-text{text-decoration:line-through;color:#aaa}
 .task-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:5px}
 .meta-select{font-size:11px;padding:3px 7px;border-radius:99px;border:1px solid transparent;cursor:pointer;outline:none;font-weight:500}
-.next-input{font-size:11px;color:#555;border:none;background:transparent;outline:none;min-width:120px;padding:2px 0;border-bottom:1px dashed #ddd}
+.next-wrap{display:flex;align-items:center;gap:5px;flex:1;min-width:160px}
+.next-input{font-size:11px;color:#555;border:none;background:transparent;outline:none;flex:1;min-width:80px;padding:2px 0;border-bottom:1px dashed #ddd}
 .next-input::placeholder{color:#bbb}
+.next-submit{font-size:10px;padding:2px 8px;border-radius:99px;border:none;cursor:pointer;font-weight:600;color:#fff;white-space:nowrap;opacity:.85;transition:opacity .15s}
+.next-submit:hover{opacity:1}
+.next-log{margin-top:5px;display:flex;flex-direction:column;gap:3px}
+.next-entry{display:flex;align-items:flex-start;gap:6px;font-size:10.5px;color:#555}
+.next-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.next-text{flex:1}
+.next-ts{color:#bbb;white-space:nowrap;margin-left:auto;font-size:10px}
 
 /* History log */
 .history-log{margin-top:6px;border-top:1px dashed #f0f0f0;padding-top:6px}
@@ -69,8 +77,8 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;min-height:100vh;padding:1.
   <div class="topbar">
     <h1>&#9989; Task Portal</h1>
     <div class="tab-row">
-      <button class="tab active-company" id="tab-company" onclick="switchTab('company')">&#127970; Company</button>
-      <button class="tab" id="tab-crm" onclick="switchTab('crm')">&#128101; CRM</button>
+      <button class="tab active-company" id="tab-company" onclick="switchTab('company')">&#127970; Nexera</button>
+      <button class="tab" id="tab-crm" onclick="switchTab('crm')">&#128101; Clinch</button>
     </div>
   </div>
   <div class="stats" id="stats-row"></div>
@@ -129,22 +137,22 @@ function makeHistory(status) {
 
 const data={
   company:[
-    {id:1,title:'Registration',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
-    {id:2,title:'Trademark',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
-    {id:3,title:'Social Media Pages with our Services',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
-    {id:4,title:'Lead List',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
-    {id:5,title:'Meeting with Virol & Anand',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
+    {id:1,title:'Registration',status:'To Do',priority:'High',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:2,title:'Trademark',status:'To Do',priority:'High',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:3,title:'Social Media Pages with our Services',status:'To Do',priority:'Medium',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:4,title:'Lead List',status:'To Do',priority:'Medium',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:5,title:'Meeting with Virol & Anand',status:'To Do',priority:'Medium',next:'',nextLog:[],history:[makeHistory('To Do')]},
   ],
   crm:[
-    {id:6, title:'Registration / Trademark',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
-    {id:7, title:'Logo with tagline',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
-    {id:8, title:'CRM Tool \u2013 Ready',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
-    {id:9, title:'Testing',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
-    {id:10,title:'Business and competitor Research',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
-    {id:11,title:'New features to be added',status:'To Do',priority:'Low',next:'',history:[makeHistory('To Do')]},
-    {id:12,title:'Hosting & Domain',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
-    {id:13,title:'Functionality Check',status:'To Do',priority:'Medium',next:'',history:[makeHistory('To Do')]},
-    {id:14,title:'Cold call Pitch \u2192 Ready',status:'To Do',priority:'High',next:'',history:[makeHistory('To Do')]},
+    {id:6, title:'Registration / Trademark',status:'To Do',priority:'High',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:7, title:'Logo with tagline',status:'To Do',priority:'Medium',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:8, title:'CRM Tool \u2013 Ready',status:'To Do',priority:'High',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:9, title:'Testing',status:'To Do',priority:'Medium',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:10,title:'Business and competitor Research',status:'To Do',priority:'Medium',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:11,title:'New features to be added',status:'To Do',priority:'Low',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:12,title:'Hosting & Domain',status:'To Do',priority:'High',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:13,title:'Functionality Check',status:'To Do',priority:'Medium',next:'',nextLog:[],history:[makeHistory('To Do')]},
+    {id:14,title:'Cold call Pitch \u2192 Ready',status:'To Do',priority:'High',next:'',nextLog:[],history:[makeHistory('To Do')]},
   ]
 };
 
@@ -228,9 +236,14 @@ function render(){
             ${['High','Medium','Low'].map(p=>`<option ${t.priority===p?'selected':''}>${p}</option>`).join('')}
           </select>
           &#8594;
-          <input class="next-input" value="${t.next.replace(/"/g,'&quot;')}"
-            placeholder="Next action…" onchange="update(${t.id},'next',this.value)" />
+          <div class="next-wrap">
+            <input class="next-input" id="next-inp-${t.id}" placeholder="Next action…"
+              onkeydown="if(event.key==='Enter')submitNext(${t.id})" />
+            <button class="next-submit" style="background:${color}"
+              onclick="submitNext(${t.id})">&#10003; Save</button>
+          </div>
         </div>
+        ${t.nextLog&&t.nextLog.length?'<div class="next-log">'+t.nextLog.slice().reverse().map((n,i)=>'<div class="next-entry"><div class="next-dot" style="background:'+(i===0?color:'#ccc')+'"></div><span class="next-text">'+n.text+'</span><span class="next-ts" title="'+n.date+' '+n.time+'">'+n.date+' &bull; '+n.time+'</span></div>').join('')+'</div>':''}
         <div class="history-log">
           <button class="history-toggle" onclick="toggleHistory(${t.id})">
             &#128337; ${isExp?'&#9650; Hide':'&#9660; Show'} status history
@@ -245,6 +258,21 @@ function render(){
       </div>
     </div>`;
   }).join('');
+}
+
+function submitNext(id){
+  const inp=document.getElementById('next-inp-'+id);
+  if(!inp)return;
+  const val=inp.value.trim();
+  if(!val)return;
+  const item=data[activeTab].find(t=>t.id===id);
+  if(item){
+    if(!item.nextLog)item.nextLog=[];
+    const s=nowStamp();
+    item.nextLog.push({text:val,date:s.date,time:s.time,iso:s.iso});
+    item.next=val;
+    render();
+  }
 }
 
 function toggleHistory(id){
@@ -287,7 +315,7 @@ function addTask(){
   const pri=document.getElementById('new-priority').value;
   const val=inp.value.trim();
   if(!val)return;
-  data[activeTab].push({id:nextId++,title:val,status:'To Do',priority:pri,next:'',history:[makeHistory('To Do')]});
+  data[activeTab].push({id:nextId++,title:val,status:'To Do',priority:pri,next:'',nextLog:[],history:[makeHistory('To Do')]});
   inp.value='';
   render();
 }
